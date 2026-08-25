@@ -5,10 +5,10 @@ RSpec.describe "Api::Expenses", type: :request do
   let!(:transport_category) { Category.create!(name: "Transport") }
 
   describe "GET /api/expenses" do
-  let!(:expense1) { Expense.create!(description: "Lunch", amount: 100.00, category: food_category, date: Date.today) }
-  let!(:expense2) { Expense.create!(description: "Taxi", amount: 50.00, category: transport_category, date: Date.today) }
-
     it "returns all expenses with category information" do
+      Expense.create!(description: "Lunch", amount: 100.00, category: food_category, date: Date.today)
+      Expense.create!(description: "Taxi", amount: 50.00, category: transport_category, date: Date.today)
+
       get "/api/expenses"
 
       expect(response).to have_http_status(:success)
@@ -16,12 +16,27 @@ RSpec.describe "Api::Expenses", type: :request do
       expect(json.length).to eq(2)
     end
 
-    it "returns expenses in descending order by created_at" do
+    it "returns expenses in descending order by date" do
+      older_expense = Expense.create!(description: "Lunch", amount: 100.00, category: food_category, date: 5.days.ago.to_date)
+      newer_expense = Expense.create!(description: "Taxi", amount: 50.00, category: transport_category, date: Date.today)
+
       get "/api/expenses"
 
       json = JSON.parse(response.body)
-      expect(json.first["id"]).to eq(expense2.id)
-      expect(json.last["id"]).to eq(expense1.id)
+      expect(json.first["id"]).to eq(newer_expense.id)
+      expect(json.last["id"]).to eq(older_expense.id)
+    end
+
+    it "breaks ties on the same date using created_at descending" do
+      same_date = Date.today
+      earlier_created = Expense.create!(description: "Lunch", amount: 100.00, category: food_category, date: same_date, created_at: 1.hour.ago)
+      later_created = Expense.create!(description: "Taxi", amount: 50.00, category: transport_category, date: same_date, created_at: Time.current)
+
+      get "/api/expenses"
+
+      json = JSON.parse(response.body)
+      expect(json.first["id"]).to eq(later_created.id)
+      expect(json.last["id"]).to eq(earlier_created.id)
     end
   end
 
