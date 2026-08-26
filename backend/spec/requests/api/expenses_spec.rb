@@ -100,5 +100,61 @@ RSpec.describe "Api::Expenses", type: :request do
         expect(response).to have_http_status(:created)
       end
     end
+
+    it "with a future date" do
+      future_params = {
+        expense: {
+          description: "Future expense",
+          amount: 100.00,
+          category_id: food_category.id,
+          date: Date.tomorrow
+        }
+      }
+
+      expect {
+        post "/api/expenses", params: future_params, as: :json
+      }.not_to change(Expense, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      json = JSON.parse(response.body)
+      expect(json["errors"]).to include("Date can't be in the future")
+    end
+
+    it "with today's date" do
+      today_params = {
+        expense: {
+          description: "Today expense",
+          amount: 100.00,
+          category_id: food_category.id,
+          date: Date.current
+        }
+      }
+
+      expect {
+        post "/api/expenses", params: today_params, as: :json
+      }.to change(Expense, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+    end
+  end
+
+  describe "PUT /api/expenses/:id" do
+    let!(:expense) { Expense.create!(description: "Lunch", amount: 50.00, category: food_category, date: Date.current) }
+
+    it "rejects an update with a future date" do
+      put "/api/expenses/#{expense.id}", params: { expense: { date: Date.tomorrow } }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      json = JSON.parse(response.body)
+      expect(json["errors"]).to include("Date can't be in the future")
+      expect(expense.reload.date).to eq(Date.current)
+    end
+
+    it "allows an update without changing the date" do
+      put "/api/expenses/#{expense.id}", params: { expense: { description: "Lunch (updated)" } }, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(expense.reload.description).to eq("Lunch (updated)")
+    end
   end
 end
