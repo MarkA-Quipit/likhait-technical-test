@@ -4,15 +4,16 @@
 
 import React from "react";
 import { ExpenseFormData } from "../types";
-import { EXPENSE_CATEGORIES } from "../constants/categories";
 import { TextField, SelectBox, Button } from "../vibes";
 import { useExpenseForm } from "../hooks/useExpenseForm";
+import { formatDate } from "../utils/expenseUtils";
 
 interface ExpenseFormProps {
   initialData?: Partial<ExpenseFormData>;
   onSubmit: (data: ExpenseFormData) => Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
+  categories: Array<{ id: number; name: string }>;
 }
 
 export function ExpenseForm({
@@ -20,6 +21,7 @@ export function ExpenseForm({
   onSubmit,
   onCancel,
   submitLabel = "Add Expense",
+  categories,
 }: ExpenseFormProps) {
   const { formData, errors, isSubmitting, handleChange, handleSubmit } =
     useExpenseForm({
@@ -39,20 +41,27 @@ export function ExpenseForm({
     marginTop: "0.5rem",
   };
 
-  const categoryOptions = EXPENSE_CATEGORIES.map((category) => ({
-    value: category,
-    label: category,
+  const categoryOptions = categories.map((category) => ({
+    value: category.name,
+    label: category.name,
   }));
 
   return (
     <form onSubmit={handleSubmit} style={formStyle}>
       <TextField
         label="Amount"
-        type="number"
-        step="0.01"
+        type="text"
+        inputMode="decimal"
         placeholder="0.00"
         value={formData.amount}
-        onChange={(e) => handleChange("amount", e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+
+          // Allow only digits, with up to one decimal point and max 2 decimal places.
+          if (/^\d*\.?\d{0,2}$/.test(value)) {
+            handleChange("amount", value);
+          }
+        }}
         error={errors.amount}
         fullWidth
         required
@@ -85,6 +94,7 @@ export function ExpenseForm({
         value={formData.date}
         onChange={(e) => handleChange("date", e.target.value)}
         error={errors.date}
+        max={formatDate(new Date())}
         fullWidth
         required
       />

@@ -14,6 +14,7 @@ import { deleteExpense, updateExpense } from "../services/api";
 interface CalendarExpenseTableProps {
   expenses: Expense[];
   onExpenseUpdated: () => void;
+  categories: Array<{ id: number; name: string }>;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -21,6 +22,7 @@ const ITEMS_PER_PAGE = 10;
 export function CalendarExpenseTable({
   expenses,
   onExpenseUpdated,
+  categories,
 }: CalendarExpenseTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -59,7 +61,7 @@ export function CalendarExpenseTable({
   const handleUpdate = async (data: ExpenseFormData) => {
     if (!editingExpense) return;
     try {
-      await updateExpense(editingExpense.id, data);
+      await updateExpense(editingExpense.id, data, categories);
       setIsEditModalOpen(false);
       setEditingExpense(null);
       onExpenseUpdated();
@@ -200,6 +202,7 @@ export function CalendarExpenseTable({
               setEditingExpense(null);
             }}
             submitLabel="Update Expense"
+            categories={categories}
           />
         )}
       </Modal>
