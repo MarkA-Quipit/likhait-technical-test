@@ -104,13 +104,22 @@ export async function createExpense(data: ExpenseFormData): Promise<Expense> {
 export async function updateExpense(
   id: number,
   data: Partial<ExpenseFormData>,
+  categories: Array<{ id: number; name: string }>,
 ): Promise<Expense> {
+  const { category, ...rest } = data;
+  const expenseData: Record<string, unknown> = { ...rest };
+
+  if (category !== undefined) {
+    const matched = categories.find((c) => c.name === category);
+    expenseData.category_id = matched?.id;
+  }
+
   const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ expense: data }),
+    body: JSON.stringify({ expense: expenseData }),
   });
 
   if (!response.ok) {

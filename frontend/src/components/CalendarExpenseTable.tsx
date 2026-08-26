@@ -61,7 +61,7 @@ export function CalendarExpenseTable({
   const handleUpdate = async (data: ExpenseFormData) => {
     if (!editingExpense) return;
     try {
-      await updateExpense(editingExpense.id, data);
+      await updateExpense(editingExpense.id, data, categories);
       setIsEditModalOpen(false);
       setEditingExpense(null);
       onExpenseUpdated();
