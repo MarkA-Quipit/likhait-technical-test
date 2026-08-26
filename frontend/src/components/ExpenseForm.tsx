@@ -50,11 +50,18 @@ export function ExpenseForm({
     <form onSubmit={handleSubmit} style={formStyle}>
       <TextField
         label="Amount"
-        type="number"
-        step="0.01"
+        type="text"
+        inputMode="decimal"
         placeholder="0.00"
         value={formData.amount}
-        onChange={(e) => handleChange("amount", e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+
+          // Allow only digits, with up to one decimal point and max 2 decimal places.
+          if (/^\d*\.?\d{0,2}$/.test(value)) {
+            handleChange("amount", value);
+          }
+        }}
         error={errors.amount}
         fullWidth
         required
