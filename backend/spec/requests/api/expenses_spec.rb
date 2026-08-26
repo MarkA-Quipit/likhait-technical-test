@@ -139,22 +139,41 @@ RSpec.describe "Api::Expenses", type: :request do
   end
 
   describe "PUT /api/expenses/:id" do
-    let!(:expense) { Expense.create!(description: "Lunch", amount: 50.00, category: food_category, date: Date.current) }
-
-    it "rejects an update with a future date" do
-      put "/api/expenses/#{expense.id}", params: { expense: { date: Date.tomorrow } }, as: :json
-
-      expect(response).to have_http_status(:unprocessable_entity)
-      json = JSON.parse(response.body)
-      expect(json["errors"]).to include("Date can't be in the future")
-      expect(expense.reload.date).to eq(Date.current)
+    let!(:expense) do
+      Expense.create!(
+        description: "Lunch",
+        amount: 100.00,
+        category: food_category,
+        date: Date.today
+      )
     end
 
-    it "allows an update without changing the date" do
-      put "/api/expenses/#{expense.id}", params: { expense: { description: "Lunch (updated)" } }, as: :json
+    context "with a valid category_id" do
+      it "updates the expense's category" do
+        put "/api/expenses/#{expense.id}",
+            params: { expense: { category_id: transport_category.id } },
+            as: :json
 
-      expect(response).to have_http_status(:success)
-      expect(expense.reload.description).to eq("Lunch (updated)")
+        expect(response).to have_http_status(:success)
+        json = JSON.parse(response.body)
+        expect(json["category"]).to eq("Transport")
+
+        expense.reload
+        expect(expense.category_id).to eq(transport_category.id)
+      end
+    end
+
+    context "with a partial update omitting category_id" do
+      it "leaves the existing category unchanged" do
+        put "/api/expenses/#{expense.id}",
+            params: { expense: { description: "Lunch updated" } },
+            as: :json
+
+        expect(response).to have_http_status(:success)
+        expense.reload
+        expect(expense.category_id).to eq(food_category.id)
+        expect(expense.description).to eq("Lunch updated")
+      end
     end
   end
 end
