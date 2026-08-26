@@ -1,6 +1,16 @@
 -- Create database if not exists
 CREATE DATABASE IF NOT EXISTS expense_system_development CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- Create test database and grant access
+-- MySQL's official image only auto-creates/grants the database named in
+-- MYSQL_DATABASE (expense_system_development), so the test database needs
+-- to be provisioned explicitly here or a fresh clone hits
+-- "Access denied for user 'expense_user'@'%' to database 'expense_system_test'"
+-- the first time `bundle exec rspec` runs.
+CREATE DATABASE IF NOT EXISTS expense_system_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON expense_system_test.* TO 'expense_user'@'%';
+FLUSH PRIVILEGES;
+
 USE expense_system_development;
 
 -- Create categories table
