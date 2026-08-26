@@ -34,6 +34,13 @@ RSpec.describe "Api::Categories", type: :request do
       expect(json["name"]).to eq("Groceries")
     end
 
+    it "normalizes the name to title case" do
+      post "/api/categories", params: { category: { name: "office supplies" } }, as: :json
+
+      json = JSON.parse(response.body)
+      expect(json["name"]).to eq("Office Supplies")
+    end
+
     it "rejects a duplicate name" do
       Category.create!(name: "Food")
 
